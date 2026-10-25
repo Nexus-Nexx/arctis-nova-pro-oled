@@ -4,6 +4,8 @@ Turns the 128×64 OLED on the **SteelSeries Arctis Nova Pro** base station into 
 a real-time spectrum analyzer of what you hear, now-playing title, headset and spare battery, volume overlay.
 Comes with a settings app that shows a live preview before anything changes on the base.
 
+![Demo: all visualization styles](docs/demo.gif)
+
 ![All visualization styles](docs/styles.png)
 
 ![Settings app](docs/settings.png)
