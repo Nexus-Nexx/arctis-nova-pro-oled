@@ -101,6 +101,10 @@ two 64-column chunks. Volume and battery events are read from the `0xFF00` colle
 the Arctis loopback with PyAudioWPatch, runs a 2048-point FFT into 32 log-spaced bands with auto-gain,
 renders with Pillow and pushes ~30 frames/s.
 
+## Support
+
+If the project is useful to you: [boosty.to/nexx106](https://boosty.to/nexx106) — or the **♥** button in the app.
+
 ## Credits and license
 
 The HID protocol (drawing, brightness, events) comes from [JerwuQu/ggoled](https://github.com/JerwuQu/ggoled),

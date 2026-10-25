@@ -3,6 +3,12 @@
 All notable changes to this project. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-10-25
+
+### Added
+- **♥ Support the project** button in the app (opens [Boosty](https://boosty.to/nexx106)) and a Sponsor button
+  on the GitHub page.
+
 ## [1.2.0] - 2026-10-25
 
 ### Added
@@ -38,6 +44,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Brightness, OLED care mode (pixel shift, dimmed idle screen), idle screens, now playing, battery, volume overlay.
 - `install.ps1` for running from source.
 
+[1.2.1]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.2.0
 [1.1.0]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.1.0
 [1.0.0]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.0.0

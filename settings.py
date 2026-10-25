@@ -30,7 +30,7 @@ from preview_styles import fake_audio
 from version import VERSION
 
 REPO_URL = "https://github.com/Nexus-Nexx/arctis-nova-pro-oled"
-SUPPORT_URL = ""  # donation page; the heart button stays hidden while this is empty
+SUPPORT_URL = "https://boosty.to/nexx106"  # donation page; the heart button is hidden when empty
 
 HERE = s.HERE                                      # data: config.json, app.json, logs
 SRC = os.path.dirname(os.path.abspath(__file__))   # source checkout (unused in the exe)

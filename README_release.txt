@@ -33,4 +33,6 @@ Quit: right-click the tray icon -> Exit. The base display keeps running; stop it
 
 Problems? Run "ArctisOLED.exe --diag" and attach diag.txt to an issue on GitHub.
 
+Поддержать проект / Support: https://boosty.to/nexx106
+
 License: GPL-3.0 (see LICENSE.txt). Not affiliated with SteelSeries.
