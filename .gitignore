@@ -5,6 +5,9 @@ __pycache__/
 *.bak-*
 config.json
 config.json.tmp
+app.json
+app.json.tmp
+shot_*.png
 settings_shot.png
 preview.png
 preview_styles.png

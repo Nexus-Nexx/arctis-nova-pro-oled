@@ -8,6 +8,8 @@ Comes with a settings app that shows a live preview before anything changes on t
 
 ![Settings app](docs/settings.png)
 
+<img src="docs/prefs.png" alt="Preferences" width="320">
+
 ## Features
 
 - **9 visualizations**: bars, LED blocks, mirror, mountain, oscilloscope, waterfall spectrogram, radial,
@@ -17,6 +19,8 @@ Comes with a settings app that shows a live preview before anything changes on t
 - Headset + spare **battery**, volume-wheel overlay, idle screen (batteries / big clock / blank).
 - **Brightness** and an **OLED care** mode: pixel shift every minute, idle screens dimmed, screen off after N minutes.
 - Settings apply on the fly (no restart), autostart with Windows, the stock base UI comes back when the app stops.
+- Settings app: **English / Russian** (follows the Windows language, switchable), **tray icon** with a quick
+  style menu, start in tray at logon, single instance.
 
 ## Requirements
 
@@ -56,7 +60,12 @@ Everything lives in `config.json` (created by the settings app, re-read every 2 
 | `blank_after_minutes` | `10` | screen off after this much silence |
 | `fps`, `shift_minutes` | `30`, `3` | frame rate; pixel-shift period when OLED care is off |
 
-The settings app UI is in Russian for now.
+App preferences (⚙ Settings: language, tray, autostart) are stored separately in `app.json`.
+
+### Translations
+
+UI strings live in [`i18n.py`](i18n.py): copy the `en` block, translate it, add the language to `LANGS`
+and open a pull request. Missing keys fall back to English.
 
 ## How it works
 
