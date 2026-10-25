@@ -11,6 +11,7 @@ import json
 import os
 import signal
 import socket
+import sys
 import threading
 import time
 from collections import deque
@@ -21,7 +22,24 @@ from PIL import Image, ImageDraw, ImageFont
 
 from oled import Oled, W, H, find_paths
 
-HERE = os.path.dirname(os.path.abspath(__file__))
+def _data_dir():
+    """Where config.json / logs live: the project folder, or next to ArctisOLED.exe
+    (falls back to %APPDATA%\\ArctisOLED when the exe folder is read-only, e.g. Program Files)."""
+    if not getattr(sys, "frozen", False):
+        return os.path.dirname(os.path.abspath(__file__))
+    d = os.path.dirname(sys.executable)
+    try:
+        probe = os.path.join(d, ".write_test")
+        open(probe, "w").close()
+        os.remove(probe)
+        return d
+    except OSError:
+        d = os.path.join(os.environ.get("APPDATA", d), "ArctisOLED")
+        os.makedirs(d, exist_ok=True)
+        return d
+
+
+HERE = _data_dir()
 FFT_N = 2048
 BANDS = 32               # 32 bars x 4 px = 128 px
 F_LO, F_HI = 40, 16000
@@ -640,14 +658,43 @@ def log(msg):
         pass
 
 
+CONTROL_PORT = 47811
+
+
 def single_instance():
     """Hold a localhost port as a cross-process lock; returns None if another copy runs."""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        s.bind(("127.0.0.1", 47811))
+        s.bind(("127.0.0.1", CONTROL_PORT))
+        s.listen(2)
         return s
     except OSError:
         return None
+
+
+def control_server(sock, stop):
+    """The lock port doubles as a control port: b"stop" ends cleanly and restores the base UI."""
+    def run():
+        while not stop.is_set():
+            try:
+                c, _ = sock.accept()
+                with c:
+                    if c.recv(16).startswith(b"stop"):
+                        log("stop requested")
+                        stop.set()
+            except OSError:
+                return
+    threading.Thread(target=run, daemon=True).start()
+
+
+def request_stop():
+    """Ask a running service to stop. True if one was reached."""
+    try:
+        with socket.create_connection(("127.0.0.1", CONTROL_PORT), timeout=1) as c:
+            c.sendall(b"stop")
+        return True
+    except OSError:
+        return False
 
 
 def run_session(stop, np_thread, cfg, dur, start):
@@ -702,6 +749,7 @@ def main():
         log("already running, exiting")
         return
     stop = threading.Event()
+    control_server(lock, stop)
     signal.signal(signal.SIGINT, lambda *_: stop.set())
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     np_thread = NowPlaying()

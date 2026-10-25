@@ -27,14 +27,36 @@ import spectrum as s
 from i18n import LANGS, set_lang, t
 from preview_styles import fake_audio
 
-VERSION = "1.1.0"
+from version import VERSION
+
 REPO_URL = "https://github.com/Nexus-Nexx/arctis-nova-pro-oled"
 SUPPORT_URL = ""  # donation page; the heart button stays hidden while this is empty
 
-HERE = s.HERE
+HERE = s.HERE                                      # data: config.json, app.json, logs
+SRC = os.path.dirname(os.path.abspath(__file__))   # source checkout (unused in the exe)
+FROZEN = getattr(sys, "frozen", False)             # running as ArctisOLED.exe
 CFG_PATH = os.path.join(HERE, "config.json")
 APP_PATH = os.path.join(HERE, "app.json")
-PYW = os.path.join(HERE, ".venv", "Scripts", "pythonw.exe")
+PYW = os.path.join(SRC, ".venv", "Scripts", "pythonw.exe")
+
+
+def launch_cmd(mode):
+    """Command line for the display service ("service") or this app hidden in the tray ("tray")."""
+    if FROZEN:
+        return [sys.executable, "--service" if mode == "service" else "--tray"]
+    if mode == "service":
+        return [PYW, os.path.join(SRC, "spectrum.py")]
+    return [PYW, os.path.join(SRC, "settings.py"), "--tray"]
+
+
+def log(msg):
+    try:
+        with open(os.path.join(HERE, "settings.log"), "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {msg}\n")
+    except OSError:
+        pass
+
+
 STARTUP = os.path.join(os.environ.get("APPDATA", ""), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
 SVC_LNK = os.path.join(STARTUP, "Arctis OLED Spectrum.lnk")
 APP_LNK = os.path.join(STARTUP, "Arctis OLED Settings.lnk")
@@ -67,19 +89,33 @@ def load_cfg():
     return read_json(CFG_PATH, s.DEFAULTS)
 
 
-def set_shortcut(path, on, script, args=""):
-    """Startup-folder shortcut -> pythonw <script> (no admin rights needed)."""
+def set_shortcut(path, on, mode):
+    """Startup-folder shortcut for launch_cmd(mode) (no admin rights needed)."""
     if not on:
         try:
             os.remove(path)
         except OSError:
             pass
         return
+    cmd = launch_cmd(mode)
     ps = ("$s=(New-Object -ComObject WScript.Shell).CreateShortcut($env:LNK);"
-          "$s.TargetPath=$env:PYW;$s.Arguments=$env:ARGS;$s.WorkingDirectory=$env:DIR;$s.Save()")
-    env = {**os.environ, "LNK": path, "PYW": PYW, "DIR": HERE,
-           "ARGS": f'"{os.path.join(HERE, script)}" {args}'.strip()}
-    subprocess.run(["powershell", "-NoProfile", "-Command", ps], env=env, creationflags=NO_WINDOW, check=False)
+          "$s.TargetPath=$env:TGT;$s.Arguments=$env:ARGS;$s.WorkingDirectory=$env:DIR;$s.Save()")
+    env = {**os.environ, "LNK": path, "TGT": cmd[0], "DIR": HERE,
+           "ARGS": " ".join(f'"{a}"' if " " in a else a for a in cmd[1:])}
+    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], env=env, creationflags=NO_WINDOW, check=False)
+    if r.returncode:
+        log(f"shortcut {path} failed: rc={r.returncode}")
+
+
+def start_service():
+    subprocess.Popen(launch_cmd("service"), cwd=HERE,
+                     creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+
+
+def stop_service():
+    """Graceful stop over the control port (base gets its stock UI back)."""
+    if not s.request_stop():
+        log("stop: service not reachable")
 
 
 def service_running():
@@ -219,7 +255,14 @@ class Tray:
             Item(lambda _i: t("tray.exit"), send("exit")),
         )
         self.icon = pystray.Icon("arctis_oled", tray_image(), "Arctis OLED", menu)
-        self.icon.run_detached()
+        # own thread with its own message loop (run_detached left the icon dead on Windows)
+        threading.Thread(target=self._run, daemon=True, name="tray").start()
+
+    def _run(self):
+        try:
+            self.icon.run()
+        except Exception as e:
+            log(f"tray crashed: {e!r}")
 
     def refresh(self):
         try:
@@ -607,8 +650,8 @@ class App:
             lang_changed = new_lang != self.prefs["language"]
             self.prefs.update(language=new_lang, tray=tray.get())
             write_json(APP_PATH, self.prefs)
-            set_shortcut(APP_LNK, app_start.get(), "settings.py", "--tray")
-            set_shortcut(SVC_LNK, svc_start.get(), "spectrum.py")
+            set_shortcut(APP_LNK, app_start.get(), "tray")
+            set_shortcut(SVC_LNK, svc_start.get(), "service")
             if tray.get() and not self.tray:
                 self._start_tray()
             elif not tray.get() and self.tray:
@@ -633,7 +676,8 @@ class App:
     def _start_tray(self):
         try:
             self.tray = Tray(self)
-        except Exception:
+        except Exception as e:
+            log(f"tray unavailable: {e!r}")
             self.tray = None
 
     def pump(self):
@@ -672,17 +716,20 @@ class App:
             self.notified = True
 
     def show(self):
-        self.root.deiconify()
-        self.root.state("normal")
-        self.root.lift()
-        self.root.focus_force()
+        r = self.root
+        r.deiconify()
+        r.state("normal")
+        r.attributes("-topmost", True)   # Windows won't raise a background app otherwise
+        r.lift()
+        r.focus_force()
+        r.after(300, lambda: r.attributes("-topmost", False))
         self.hidden = False
 
     def quit(self):
         if self.tray:
             self.tray.stop()
         self.src.close()
-        self.root.destroy()
+        self.root.destroy()  # main() then hard-exits so no audio/tray thread keeps the process alive
 
     # ---------- service ----------
     def _paint_service(self):
@@ -701,11 +748,9 @@ class App:
 
     def toggle_service(self):
         if service_running():
-            subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
-                              os.path.join(HERE, "stop.ps1")], creationflags=NO_WINDOW)
+            stop_service()
         else:
-            subprocess.Popen([PYW, os.path.join(HERE, "spectrum.py")], cwd=HERE,
-                             creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+            start_service()
         self.svc_btn.state(["disabled"])
         self.root.after(2500, lambda: self.svc_btn.state(["!disabled"]))
 
@@ -755,15 +800,20 @@ def main():
         pass
     root = tk.Tk()
     root.withdraw()
+    root.report_callback_exception = lambda *exc: log("ui error: " + "".join(
+        __import__("traceback").format_exception(*exc)))
     app = App(root, opts)
     if not opts.shot:
         try:
             IpcServer(lambda: app.q.put(("show",))).start()
         except OSError:
             pass
+        if not service_running():  # opening the app = the base should be showing something
+            start_service()
     if opts.shot:
         root.attributes("-topmost", True)
     root.mainloop()
+    os._exit(0)  # audio callback / tray / now-playing threads must not keep the process alive
 
 
 if __name__ == "__main__":

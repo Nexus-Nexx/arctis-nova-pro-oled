@@ -3,14 +3,20 @@ __pycache__/
 *.pyc
 *.log
 *.bak-*
+# user data
 config.json
 config.json.tmp
 app.json
 app.json.tmp
+diag.txt
+# build output
+build/
+dist/
+release/
+# screenshots / scratch
 shot_*.png
 settings_shot.png
 preview.png
 preview_styles.png
-# local dev scratch
 preview.py
 probe_info.py

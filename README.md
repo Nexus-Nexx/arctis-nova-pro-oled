@@ -22,25 +22,52 @@ Comes with a settings app that shows a live preview before anything changes on t
 - Settings app: **English / Russian** (follows the Windows language, switchable), **tray icon** with a quick
   style menu, start in tray at logon, single instance.
 
+## Quick start (no Python needed)
+
+1. Download **`ArctisOLED-vX.Y.Z-win64.zip`** from [Releases](https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/latest).
+2. Unzip the `ArctisOLED` folder somewhere permanent, e.g. `Documents` (not inside the zip, not `Program Files`).
+3. Run **`ArctisOLED.exe`**. SmartScreen may warn because the exe isn't code-signed:
+   *More info → Run anyway*.
+4. Play music — the base shows the spectrum, the window shows a live preview.
+5. Pick a visualization → **Apply to base**. In **⚙ Settings** turn on *Start with Windows*.
+
+Closing the window hides it to the tray (yellow bars icon; on Windows 11 look under the **^** arrow).
+Quit: right-click the tray icon → **Exit**. The base display keeps running until you press **Stop**.
+
+Something wrong? Run `ArctisOLED.exe --diag` and attach the generated `diag.txt` to an
+[issue](https://github.com/Nexus-Nexx/arctis-nova-pro-oled/issues).
+
+### Быстрый старт (RU)
+
+1. Скачайте **`ArctisOLED-vX.Y.Z-win64.zip`** в [Releases](https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/latest).
+2. Распакуйте папку `ArctisOLED` туда, где она будет жить, например в «Документы».
+3. Запустите **`ArctisOLED.exe`**. Если SmartScreen ругается: «Подробнее» → «Выполнить в любом случае»
+   (программа не подписана сертификатом).
+4. Включите музыку — на базе появится спектр, в окне живой предпросмотр.
+5. Выберите визуализацию → **Применить на базу**. В **⚙ Настройках** включите запуск вместе с Windows.
+
+Крестик сворачивает окно в трей. Выход — правый клик по иконке → **Выход**.
+
 ## Requirements
 
-- Windows 10/11, Python 3.12 (tested; `winsdk` has no wheels for some newer versions)
+- Windows 10/11 (64-bit).
 - Arctis Nova Pro **Wireless** — tested. Wired / Xbox variants use the same protocol and are listed, but untested.
-- SteelSeries GG / Sonar may keep running.
+- **SteelSeries GG is not required**: the app talks to the base over USB HID and listens to the Windows audio
+  device directly. GG / Sonar may keep running alongside.
 
-## Install
+## From source
 
 ```powershell
 git clone https://github.com/Nexus-Nexx/arctis-nova-pro-oled.git
 cd arctis-nova-pro-oled
-powershell -ExecutionPolicy Bypass -File .\install.ps1
+powershell -ExecutionPolicy Bypass -File .\install.ps1   # .venv + shortcuts, needs Python 3.12
+powershell -ExecutionPolicy Bypass -File .\build.ps1     # optional: dist\ArctisOLED\ArctisOLED.exe + zip
 ```
 
-The script creates `.venv`, installs `requirements.txt`, adds an **Arctis OLED** shortcut to the desktop
-(settings app) and a startup shortcut for the display service, then starts it.
+Manual run: `.venv\Scripts\pythonw.exe spectrum.py` (base display) and `.venv\Scripts\pythonw.exe settings.py`
+(settings). Stop: `.\stop.ps1` — the base returns to its stock screen.
 
-Manual run: `.venv\Scripts\pythonw.exe spectrum.py` (service) and `.venv\Scripts\pythonw.exe settings.py` (settings).
-Stop: `.\stop.ps1` — the base returns to its stock screen.
+Changes per version: [CHANGELOG.md](CHANGELOG.md).
 
 ## Settings
 
