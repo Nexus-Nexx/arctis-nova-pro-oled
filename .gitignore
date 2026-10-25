@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.log
+*.bak-*
+config.json
+config.json.tmp
+settings_shot.png
+preview.png
+preview_styles.png
+# local dev scratch
+preview.py
+probe_info.py
