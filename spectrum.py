@@ -20,7 +20,7 @@ import numpy as np
 import pyaudiowpatch as pyaudio
 from PIL import Image, ImageDraw, ImageFont
 
-from oled import Oled, W, H, find_paths
+from oled import Oled, W, H, find_device, find_paths, list_steelseries
 
 def _data_dir():
     """Where config.json / logs live: the project folder, or next to ArctisOLED.exe
@@ -270,13 +270,16 @@ class BaseEvents(threading.Thread):
     event (0x07,0xb7) buf[2]=headset buf[3]=spare; reply (0x06,0xb0) buf[6]/buf[7], wireless buf[15]==8;
     connection event (0x07,0xb5) wireless buf[4]==8."""
     VOL_MAX = 0x38
-    INFO_ID = 0x06
 
-    def __init__(self, info_path, oled_path):
+    def __init__(self, info_path, oled_path, profile=None):
         super().__init__(daemon=True)
-        # On Windows: report 0x06 (query + 0xB0 reply) lives on the 0xFFC0 collection,
+        # Nova Pro on Windows: report 0x06 (query + 0xB0 reply) lives on the 0xFFC0 collection,
         # report 0x07 events (volume, battery, connection) on the 0xFF00 collection.
+        # Nova Elite: query/reply use report 0x07 on the info collection (ggoled PR #35).
         self.paths = (info_path, oled_path)
+        self.INFO_ID = profile.info_id if profile else 0x06
+        self.query_on_info = bool(profile and profile.query_on_info)
+        self.spare_battery = profile.spare_battery if profile else True
         self.volume, self.vol_t = None, 0.0
         self.battery = self.spare = None
         self.connected = None
@@ -296,7 +299,7 @@ class BaseEvents(threading.Thread):
                     d.open_path(p)
                     d.set_nonblocking(1)
                     devs.append(d)
-                self._q = devs[1]
+                self._q = devs[0] if self.query_on_info else devs[1]
                 last_q = 0
                 while self.alive:
                     if time.time() - last_q > 60:
@@ -311,13 +314,17 @@ class BaseEvents(threading.Thread):
                         self.volume = max(0, min(self.VOL_MAX, self.VOL_MAX - buf[2])) / self.VOL_MAX
                         self.vol_t = time.time()
                     elif key == (0x07, 0xB7):
-                        self.battery, self.spare = buf[2], buf[3]
+                        self.battery = buf[2]
+                        if self.spare_battery:  # Nova Elite: byte 3 is a charging flag, not a spare
+                            self.spare = buf[3]
                     elif key == (0x07, 0xB5):
                         self.connected = buf[4] == 8
                         self._query()
                     elif key == (self.INFO_ID, 0xB0) and len(buf) > 15:
                         self.connected = buf[15] == 8
-                        self.battery, self.spare = buf[6], buf[7]
+                        self.battery = buf[6]
+                        if self.spare_battery:
+                            self.spare = buf[7]
                         log(f"base info: connected={self.connected} headset={self.battery}/8 spare={self.spare}/8 raw={bytes(buf[:16]).hex()}")
             except Exception:
                 time.sleep(2)  # base unplugged / busy: retry
@@ -701,10 +708,13 @@ def run_session(stop, np_thread, cfg, dur, start):
     """One device session; returns when stopped or raises on device/audio failure."""
     oled = Oled()
     audio = Loopback()
-    log(f"session: capturing {audio.name} @ {audio.rate} Hz")
-    oled_path, info_path = find_paths()
-    ev = BaseEvents(info_path, oled_path)
-    ev.start()
+    prof = oled.profile
+    log(f"session: {prof.name}{' (experimental)' if prof.experimental else ''}, "
+        f"capturing {audio.name} @ {audio.rate} Hz")
+    _, oled_path, info_path = find_device()
+    ev = BaseEvents(info_path, oled_path, prof)
+    if info_path:  # Omni: no info collection known yet -> no battery / volume
+        ev.start()
     an, rend = Analyzer(audio.rate), Renderer()
     bright = None  # last brightness sent to the base
     try:

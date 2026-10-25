@@ -22,7 +22,8 @@ def icon():
 
 
 def version_file():
-    nums = tuple(int(x) for x in VERSION.split(".")) + (0,)
+    import re
+    nums = tuple(int(x) for x in re.findall(r"\d+", VERSION)[:3]) + (0,)  # "1.3.0-beta.1" -> (1, 3, 0, 0)
     text = f"""VSVersionInfo(
   ffi=FixedFileInfo(filevers={nums}, prodvers={nums}, mask=0x3f, flags=0x0, OS=0x40004,
                     fileType=0x1, subtype=0x0, date=(0, 0)),

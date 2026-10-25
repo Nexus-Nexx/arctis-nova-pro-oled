@@ -3,6 +3,16 @@
 All notable changes to this project. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0-beta.1] - 2026-10-26
+
+### Added
+- **Experimental** support for **Arctis Nova Elite** (base PID `0x2244`) and **Arctis Nova Pro Omni** GameDAC
+  (PID `0x2290`), based on protocol notes from the ggoled community (issues #26, #33, PR #35).
+  Untested by the author — testers wanted.
+  - Elite: OLED on interface 3, report IDs 1 (screen) / 7 (info); battery shown, no spare battery.
+  - Omni: screen drawing only; brightness, battery and returning to the stock screen aren't known yet.
+- `--diag` now lists every SteelSeries HID collection, which is what's needed to add new devices.
+
 ## [1.2.1] - 2026-10-25
 
 ### Added
@@ -44,6 +54,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Brightness, OLED care mode (pixel shift, dimmed idle screen), idle screens, now playing, battery, volume overlay.
 - `install.ps1` for running from source.
 
+[1.3.0-beta.1]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.3.0-beta.1
 [1.2.1]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.2.0
 [1.1.0]: https://github.com/Nexus-Nexx/arctis-nova-pro-oled/releases/tag/v1.1.0

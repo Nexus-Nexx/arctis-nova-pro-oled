@@ -19,7 +19,17 @@ def main():
     lines.append(f"Arctis OLED {VERSION}  frozen={getattr(sys, 'frozen', False)}  "
                  f"python={platform.python_version()}  windows={platform.version()}")
     lines.append(f"data dir: {s.HERE}")
-    add("base HID (oled, info)", lambda: s.find_paths())
+    def device():
+        prof, oled, info = s.find_device()
+        if not prof:
+            return "no supported device"
+        return f"{prof.name}{' (experimental)' if prof.experimental else ''}  oled={oled!r}  info={info!r}"
+    add("device", device)
+    lines.append("SteelSeries HID collections:")
+    try:
+        lines += ["  " + x for x in s.list_steelseries()] or ["  (none)"]
+    except Exception as e:
+        lines.append(f"  ERROR {e!r}")
     add("service running", lambda: not bool(s.single_instance()))
 
     def loopback():
