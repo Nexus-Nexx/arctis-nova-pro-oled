@@ -55,7 +55,8 @@ Something wrong? Run `ArctisOLED.exe --diag` and attach the generated `diag.txt`
 - Windows 10/11 (64-bit).
 - Arctis Nova Pro **Wireless** — tested. Wired / Xbox variants use the same protocol and are listed, but untested.
 - Arctis **Nova Elite** and **Nova Pro Omni** — *experimental* since 1.3.0-beta.1 (protocol from community notes,
-  not tested by me). Omni: screen only, no brightness/battery yet. Feedback with `diag.txt` very welcome.
+  not tested by me; the Elite PID `0x2270` was confirmed by a tester's `--diag` in beta.2, screen output still
+  unverified). Omni: screen only, no brightness/battery yet. Feedback with `diag.txt` very welcome.
 - **SteelSeries GG is not required**: the app talks to the base over USB HID and listens to the Windows audio
   device directly. GG / Sonar may keep running alongside.
 

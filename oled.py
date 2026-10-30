@@ -35,7 +35,7 @@ class Profile:
 PROFILES = (
     Profile("Arctis Nova Pro", (0x12CB, 0x12CD, 0x12E0, 0x12E5, 0x225D), 4,
             oled_id=0x06, info_id=0x06, report_size=1024, header=6),
-    Profile("Arctis Nova Elite", (0x2244,), 3,
+    Profile("Arctis Nova Elite", (0x2244, 0x2270), 3,
             oled_id=0x01, info_id=0x07, report_size=1024, header=6,
             query_on_info=True, spare_battery=False, experimental=True),
     Profile("Arctis Nova Pro Omni", (0x2290,), None,

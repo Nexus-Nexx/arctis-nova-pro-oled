@@ -3,6 +3,13 @@
 All notable changes to this project. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.3.0-beta.2] - 2026-10-30
+
+### Fixed
+- **Arctis Nova Elite** is now detected: a tester's `--diag` showed the real base PID is `0x2270` (`0x2244` stays
+  listed in case another variant uses it). The interface layout from the notes (interface 3: screen `0xFFC0` /
+  info `0xFF00`) matched; the report IDs are still unverified on hardware.
+
 ## [1.3.0-beta.1] - 2026-10-26
 
 ### Added
